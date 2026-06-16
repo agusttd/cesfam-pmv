@@ -1,14 +1,53 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
+
+interface Cita {
+  id: number;
+  rut_paciente: string;
+  motivo: string;
+  estado: string;
+  fecha_solicitud: string;
+}
 
 export default function TorreDeControl() {
-  // Datos simulados (Mock data) para esta etapa 1.
-  // En la Etapa 3, esto vendra de un fetch a Supabase/otra en tiempo real.
-  const citasPendientes = [
-    { id: 1, rut: "15.678.123-4", motivo: "Morbilidad", hora: "08:30 AM", estado: "Pendiente" },
-    { id: 2, rut: "12.345.678-9", motivo: "Control Crónico", hora: "09:00 AM", estado: "Asignado" },
-  ];
+  const [citasPendientes, setCitasPendientes] = useState<Cita[]>([]);
+
+  useEffect(() => {
+    // Se cargan las citas existentes al abrir la página
+    const fetchCitas = async () => {
+      const { data, error } = await supabase
+        .from("citas")
+        .select("*")
+        .order("fecha_solicitud", { ascending: false });
+        
+      if (data) setCitasPendientes(data);
+      if (error) console.error("Error al cargar citas:", error);
+    };
+
+    fetchCitas();
+
+    // se actualizan los cambios en tiempo real 
+    const channel = supabase
+      .channel("cambios-en-citas")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "citas" },
+        (payload) => {
+          // Cuando llega un nuevo INSERT a la BD, lo agregamos arriba en la tabla visual
+          console.log("¡Nueva cita recibida en tiempo real!", payload.new);
+          setCitasPendientes((prev) => [payload.new as Cita, ...prev]);
+        }
+      )
+      .subscribe();
+
+    // Limpieza al cerrar la página
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   return (
     <main className="min-h-screen bg-slate-100 p-8">
@@ -33,34 +72,31 @@ export default function TorreDeControl() {
               <tr className="bg-slate-50 border-b border-slate-200 text-sm font-semibold text-slate-600">
                 <th className="p-4">RUT Paciente</th>
                 <th className="p-4">Motivo</th>
-                <th className="p-4">Hora Solicitada</th>
                 <th className="p-4">Estado del Sistema</th>
               </tr>
             </thead>
             <tbody>
-              {citasPendientes.map((cita) => (
-                <tr key={cita.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                  <td className="p-4 font-medium text-slate-700">{cita.rut}</td>
-                  <td className="p-4 text-slate-600">{cita.motivo}</td>
-                  <td className="p-4 text-slate-600">{cita.hora}</td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      cita.estado === "Asignado" 
-                        ? "bg-emerald-100 text-emerald-700" 
-                        : "bg-amber-100 text-amber-700"
-                    }`}>
-                      {cita.estado}
-                    </span>
+              {citasPendientes.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="p-8 text-center text-slate-500">
+                    No hay solicitudes pendientes.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                citasPendientes.map((cita) => (
+                  <tr key={cita.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td className="p-4 font-medium text-slate-700">{cita.rut_paciente}</td>
+                    <td className="p-4 text-slate-600">{cita.motivo}</td>
+                    <td className="p-4">
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+                        {cita.estado}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
-          
-          {/* Mensaje de placeholder para cuando conecten la BD */}
-          <div className="p-4 text-center text-sm text-slate-400 border-t border-slate-100 bg-slate-50/50">
-            Esperando nuevas solicitudes en tiempo real...
-          </div>
         </div>
 
         <div className="mt-8">

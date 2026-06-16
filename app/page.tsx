@@ -2,18 +2,32 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase"; 
 
 export default function FormularioPaciente() {
   const [rut, setRut] = useState("");
   const [motivo, setMotivo] = useState("");
+  const [enviando, setEnviando] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Aqui en la etapa 3 se conecta con supabase o la bd que quieran
-    console.log("Enviando a Supabase:", { rut, motivo });
-    alert("¡Solicitud enviada! En la etapa 3 esto se irá directo a la base de datos.");
-    setRut("");
-    setMotivo("");
+    setEnviando(true);
+
+    // Inserción de datos en Supabase
+    const { error } = await supabase
+      .from("citas")
+      .insert([{ rut_paciente: rut, motivo: motivo, estado: "Agendado automáticamente" }]);
+
+    if (error) {
+      console.error("Error al guardar:", error);
+      alert("Hubo un error al solicitar la hora.");
+    } else {
+      alert("¡Solicitud enviada con éxito al CESFAM!");
+      setRut("");
+      setMotivo("");
+    }
+    
+    setEnviando(false);
   };
 
   return (
@@ -34,7 +48,7 @@ export default function FormularioPaciente() {
               placeholder="Ej: 12.345.678-9"
               value={rut}
               onChange={(e) => setRut(e.target.value)}
-              className="w-full px-4 py-2 border text-gray-900 border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+              className="w-full px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
               required
             />
           </div>
@@ -46,7 +60,7 @@ export default function FormularioPaciente() {
             <select
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
-              className="w-full px-4 py-2 border text-gray-900 border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+              className="w-full px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
               required
             >
               <option value="" disabled>Seleccione un motivo...</option>
@@ -58,14 +72,16 @@ export default function FormularioPaciente() {
 
           <button
             type="submit"
-            className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors mt-4"
+            disabled={enviando}
+            className={`w-full text-white font-semibold py-2 px-4 rounded-lg transition-colors mt-4 ${
+              enviando ? "bg-teal-400 cursor-not-allowed" : "bg-teal-600 hover:bg-teal-700"
+            }`}
           >
-            Solicitar Hora
+            {enviando ? "Procesando..." : "Solicitar Hora"}
           </button>
         </form>
       </div>
 
-      {/* Link temporal para navegar a la otra vista y probar */}
       <Link href="/torre-de-control" className="mt-8 text-teal-600 hover:underline text-sm font-medium">
         Ir a la vista del funcionario (Torre de Control) &rarr;
       </Link>
