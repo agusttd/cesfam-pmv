@@ -34,7 +34,7 @@ export default function FormularioPaciente() {
               placeholder="Ej: 12.345.678-9"
               value={rut}
               onChange={(e) => setRut(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+              className="w-full px-4 py-2 border text-gray-900 border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
               required
             />
           </div>
@@ -46,7 +46,7 @@ export default function FormularioPaciente() {
             <select
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+              className="w-full px-4 py-2 border text-gray-900 border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
               required
             >
               <option value="" disabled>Seleccione un motivo...</option>
