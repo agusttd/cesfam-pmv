@@ -88,7 +88,11 @@ export default function TorreDeControl() {
                     <td className="p-4 font-medium text-slate-700">{cita.rut_paciente}</td>
                     <td className="p-4 text-slate-600">{cita.motivo}</td>
                     <td className="p-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        cita.estado === "Agendado automáticamente" 
+                          ? "bg-emerald-100 text-emerald-700" 
+                          : "bg-amber-100 text-amber-700"
+                      }`}>
                         {cita.estado}
                       </span>
                     </td>
